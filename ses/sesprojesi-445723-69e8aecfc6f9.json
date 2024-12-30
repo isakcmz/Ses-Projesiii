@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sesprojesi-445723",
+  "private_key_id": "69e8aecfc6f9d7021b60a874b90635f898616692",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCIuqvAGedO/3xf\nwpJz3RWLvYr3s2qmsJ8PpRQowxPNVlPhUv1y8qpDScoiHBT4/3DLgy/PcAcW6trn\n2WCGPcvayPXhpFA2dORUDzKLc++4aEOTQXA2R0sSn0HrbSCXC4vFCPoFMhKQot2c\nLg3cXymTsp0JViHyzfB3G2aHuGUQmfAHvKuY1fDSDi7bAQCuoMNJphBdFDzcsl+k\nIwkvZsjeDgsnNGpa0pGzcrX+VYhgtmqlCCzNCC7GsIZG1i81kAAEmyUfS5vsiHAm\nAk/cmvCNWdVz24tKmrS+2x5nBO59YVjg2AeemeWl7y7uTg0cGGHf4AVCAly2wtpL\nVFLiPOT7AgMBAAECggEABFWgN2+ayZvuN9e8CAUTBC8QeYtfVV5CbJ7xfw+2g2S6\nAmnWTXXFhNFeB97Kbp2KcdxizTl780BwWB4ObuY4N2NcVOuxYnvDxHZtRizfhWhC\nXCfpUSjJbhNMzHqh9Q5EpaZqZqfDtubmDgFxWj8aDlI0CdiIX8e8WJcU+2oSqiGe\ngQoE84eJ6HLevFyQjrhj0Rs48eE3VgtwhuDmTycr9Ltb2/QoKqz6jvW0APdFxwsW\nxYZI7cl5MdUswNQoJsf4saSTLisY2cz0AE8fbuu70nU23KCDkX3KXbUVGMu9XiO1\ncvWmk57xyLaybnm2cgp7r/NyyZUIiyA7XWXN6IBFIQKBgQC+8nLVXVHIUfjNjhBK\ne/IhqIDnYFCa4KAOGoJm0Lcdrcn1cjlsuV31oYSzpO2NASIa7/MBrKj+W+lFKotc\nKJTArz/XcOoOlyzmmg9+9J+CSens4XgRbNhSWcij/PnSINFUCwakJ/wLfmyVP5SI\n6xXUh6e7L4Iw9rKLJyz9rM3DTQKBgQC3T5SbfOjsE0JVEsS7grUFmPuz8PbwcW2t\nOQOnln6W5Nd7B0nvSLH38yRacUCCbo353wtN6ie32LGLfDFFbilYw5rIdrN9jKIX\noqFTdrklV+ljRLCJr9pbEEROtgpZ78zKvcclAdCLPNd6+s6YubfQ9oop6IeZDPSZ\nKujr8SYVZwKBgQCBiaD1tnVA3LtZV8MdhLBivRmV3fVQ3Io4hytn7LgNXlTgOjlS\n1P41IPoRlRXCzr4AYEAPJr8Or/O0hIQ+ZRllDn7U/TkL5OsFFgblLbb4gIQ9u0fl\nKl4mn9pJxdkFAFaCGWjL/IQ0l/O53IQ7zp/kqpLTngtIhFPjqxQOlCiTEQKBgGFS\n3BiNgfDM7NvUIiVX6Ro2tfQ8TC8uWcetTJZunXkpuIn2PbfQRcTaD4QBOvnFDpYK\naKsOVdYTM3hWEKbHLSaWe5hRBUz0HJ8l1jdFAlmkSiJNNtlzRyAwC8QqfGZxna5K\nge/Q/dLfE5yUipmliMVmD8beURfePAMSOCYEm26jAoGAB3IXYf9fWeoLEnLJ0QqS\nSXLxW/Ru4RmuPfMcBrVomL3euTNHowzfq9MRM0PO7JKhSiK/EI0uOZCLqNoR+xI/\nHREQ4iRU2KelMVUPW70tXOTu+ouDda+upCDOIVQRI4EB3K1k3Xnx0SZ45cNq/ycn\nLT3rrUJZbNFipZPJM5c0BSg=\n-----END PRIVATE KEY-----\n",
+  "client_email": "sesden-metine@sesprojesi-445723.iam.gserviceaccount.com",
+  "client_id": "108466390634261817629",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sesden-metine%40sesprojesi-445723.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

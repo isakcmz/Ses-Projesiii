@@ -1,0 +1,256 @@
+import sqlite3
+import os
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import sounddevice as sd
+import wave
+import threading
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score
+import librosa
+import librosa.display
+from sklearn.preprocessing import StandardScaler
+import pickle
+import pygame
+
+# Veritabanını oluştur ve tabloyu tanımla
+def create_database():
+    conn = sqlite3.connect("audio_database.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audio_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_name TEXT NOT NULL,
+            file_path TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Ses dosyasını ve sahibi adını veritabanına kaydet
+def save_to_database(owner_name, file_path):
+    conn = sqlite3.connect("audio_database.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO audio_data (owner_name, file_path) VALUES (?, ?)", (owner_name, os.path.abspath(file_path)))
+    conn.commit()
+    conn.close()
+
+# Ses dosyasını seçmek için fonksiyon
+def select_file():
+    file_path = filedialog.askopenfilename(
+        title="Ses Dosyasını Seç",
+        filetypes=[("Ses Dosyaları", "*.mp3;*.wav;*.aac;*.ogg")]
+    )
+    if file_path:
+        file_entry.delete(0, tk.END)
+        file_entry.insert(0, file_path)
+
+# Kaydet butonunun işlevi
+def save_data():
+    owner_name = name_entry.get()
+    file_path = file_entry.get()
+
+    if not owner_name or not file_path:
+        messagebox.showerror("Hata", "Lütfen tüm alanları doldurun!")
+        return
+
+    if not os.path.exists(file_path):
+        messagebox.showerror("Hata", "Seçilen dosya bulunamadı!")
+        return
+
+    save_to_database(owner_name, file_path)
+    messagebox.showinfo("Başarılı", "Veriler başarıyla kaydedildi!")
+    name_entry.delete(0, tk.END)
+    file_entry.delete(0, tk.END)
+
+# Özellik çıkarma fonksiyonu
+def extract_features(file_path):
+    try:
+        y, sr = librosa.load(file_path, sr=None)
+        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        return np.mean(mfccs.T, axis=0)
+    except FileNotFoundError:
+        messagebox.showerror("Hata", f"Dosya bulunamadı: {file_path}")
+        return None
+    except Exception as e:
+        messagebox.showerror("Hata", f"Dosya işlenirken hata oluştu: {e}")
+        return None
+
+# Modeli eğitme fonksiyonu
+def train_model():
+    conn = sqlite3.connect("audio_database.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT owner_name, file_path FROM audio_data")
+    data = cursor.fetchall()
+    conn.close()
+
+    X = []
+    y = []
+
+    for owner_name, file_path in data:
+        features = extract_features(file_path)
+        if features is not None:
+            X.append(features)
+            y.append(owner_name)
+
+    if not X:
+        messagebox.showerror("Hata", "Eğitim için yeterli veri bulunamadı!")
+        return
+
+    X = np.array(X)
+    y = np.array(y)
+
+    # Verileri ölçeklendirme
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    # Eğitim ve test verilerini ayırma
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Modeli eğitme
+    model = RandomForestClassifier()
+    model.fit(X_train, y_train)
+
+    # Performans metrikleri
+    y_pred = model.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average='weighted')
+
+    # Modeli ve scaler'ı kaydetme
+    with open("audio_recognition_model.pkl", "wb") as f:
+        pickle.dump((model, scaler), f)
+
+    messagebox.showinfo("Model Eğitimi", f"Model eğitildi!\nDoğruluk: {acc:.2f}\nF1 Skoru: {f1:.2f}")
+
+# Gerçek zamanlı ses tanımlama
+def recognize_real_time():
+    try:
+        with open("audio_recognition_model.pkl", "rb") as f:
+            model, scaler = pickle.load(f)
+    except FileNotFoundError:
+        messagebox.showerror("Hata", "Model dosyası bulunamadı! Lütfen önce modeli eğitin.")
+        return
+
+    def callback(indata, frames, time, status):
+        if status:
+            print(status)
+        features = librosa.feature.mfcc(y=indata[:, 0], sr=44100, n_mfcc=13)
+        features_mean = np.mean(features.T, axis=0)
+        features_scaled = scaler.transform([features_mean])
+        prediction = model.predict(features_scaled)
+        print(f"Tanımlanan Kişi: {prediction[0]}")
+
+    with sd.InputStream(samplerate=44100, channels=1, callback=callback):
+        messagebox.showinfo("Bilgi", "Gerçek zamanlı tanımlama başladı. Mikrofonunuzu kullanabilirsiniz.")
+        tk.Toplevel().mainloop()
+
+# Ses kaydı için değişkenler
+is_recording = False
+output_file = ""
+
+# Ses kaydını başlat
+def start_recording():
+    global is_recording, output_file
+    owner_name = name_entry.get()
+    if not owner_name:
+        messagebox.showerror("Hata", "Lütfen sahibin adını girin!")
+        return
+
+    output_file = f"{owner_name}_recording.wav"
+    is_recording = True
+    threading.Thread(target=record_audio, args=(output_file,)).start()
+    messagebox.showinfo("Bilgi", "Ses kaydı başladı!")
+
+# Ses kaydını durdur
+def stop_recording():
+    global is_recording
+    is_recording = False
+    messagebox.showinfo("Bilgi", "Ses kaydı durduruldu ve kaydedildi!")
+    file_entry.delete(0, tk.END)
+    file_entry.insert(0, output_file)
+
+# Ses kaydı işlevi
+def record_audio(file_path):
+    global is_recording
+    with wave.open(file_path, "wb") as wf:
+        wf.setnchannels(1)  # Mono
+        wf.setsampwidth(2)  # 16-bit
+        wf.setframerate(44100)  # 44.1kHz
+        with sd.InputStream(samplerate=44100, channels=1, dtype="int16") as stream:
+            while is_recording:
+                data = stream.read(1024)[0]
+                wf.writeframes(data)
+
+# Ses dosyasını oynat
+def play_audio():
+    file_path = file_entry.get()
+    if not file_path or not os.path.exists(file_path):
+        messagebox.showwarning("Hata", "Lütfen geçerli bir ses dosyası seçin!")
+        return
+
+    try:
+        pygame.mixer.init()
+        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.play()
+    except Exception as e:
+        messagebox.showerror("Hata", f"Ses dosyası oynatılamadı: {e}")
+
+# Ses oynatmayı durdur
+def stop_audio():
+    try:
+        pygame.mixer.music.stop()
+    except Exception as e:
+        messagebox.showerror("Hata", f"Ses durdurulamadı: {e}")
+
+# Tkinter arayüzü oluştur
+app = tk.Tk()
+app.title("Ses ve Sahip Kaydı ve Tanıma")
+app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}")
+
+# Etiketler ve giriş alanları
+name_label = tk.Label(app, text="Sahibin Adı:")
+name_label.pack(pady=5)
+name_entry = tk.Entry(app, width=50)
+name_entry.pack(pady=5)
+
+file_label = tk.Label(app, text="Ses Dosyası:", bg="lightgray")
+file_label.pack(pady=5)
+file_frame = tk.Frame(app)
+file_frame.pack(pady=5)
+file_entry = tk.Entry(file_frame, width=40)
+file_entry.pack(side=tk.LEFT, padx=5)
+file_button = tk.Button(file_frame, text="Seç", command=select_file)
+file_button.pack(side=tk.LEFT)
+
+# Kaydet butonu
+save_button = tk.Button(app, text="Kaydet", command=save_data)
+save_button.pack(pady=10)
+
+# Ses kaydı butonları
+record_button = tk.Button(app, text="Kayda Başla", command=start_recording)
+record_button.pack(pady=5)
+stop_button = tk.Button(app, text="Kaydı Durdur", command=stop_recording)
+stop_button.pack(pady=5)
+
+# Ses dosyasını oynat ve durdur butonları
+play_button = tk.Button(app, text="Ses Dosyasını Oynat", command=play_audio)
+play_button.pack(pady=10)
+stop_play_button = tk.Button(app, text="Ses Oynatmayı Durdur", command=stop_audio)
+stop_play_button.pack(pady=10)
+
+# Model eğitimi butonu
+train_button = tk.Button(app, text="Modeli Eğit", command=train_model)
+train_button.pack(pady=10)
+
+# Gerçek zamanlı tanımlama butonu
+real_time_button = tk.Button(app, text="Gerçek Zamanlı Tanımla", command=recognize_real_time)
+real_time_button.pack(pady=10)
+
+# Veritabanını oluştur
+create_database()
+
+# Tkinter döngüsünü başlat
+app.mainloop()
